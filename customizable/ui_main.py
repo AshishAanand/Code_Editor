@@ -35,7 +35,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 
-class Ui_MainWindow(object):
+class Ui_MainWindow(QMainWindow):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(900, 820)
@@ -45,31 +45,31 @@ class Ui_MainWindow(object):
         self.centralwidget.setObjectName("centralwidget")
 
         # Set up toolbar with updated icons and professional look
-        toolbar = QToolBar("File Operations")
+        toolbar = QToolBar()
         self.addToolBar(toolbar)
-        self.toolbar.setIconSize(QSize(24, 24))  # Increase icon size for visibility
-        self.toolbar.setStyleSheet("background-color: #2c3e50; color: white;")  # Dark toolbar
+        toolbar.setIconSize(QSize(24, 24))  # Increase icon size for visibility
+        toolbar.setStyleSheet("background-color: #2c3e50; color: white;")  # Dark toolbar
 
         # Add actions to toolbar
         open_action = QAction(QIcon("icons/open.png"), "Open File", self)
         open_action.triggered.connect(self.openFile)
-        self.toolbar.addAction(open_action)
+        toolbar.addAction(open_action)
 
         save_action = QAction(QIcon("icons/save.png"), "Save File", self)
         save_action.triggered.connect(self.saveFile)
-        self.toolbar.addAction(save_action)
+        toolbar.addAction(save_action)
 
         new_file_action = QAction(QIcon("icons/new-file.png"), "New File", self)
         new_file_action.triggered.connect(self.newFile)
-        self.toolbar.addAction(new_file_action)
+        toolbar.addAction(new_file_action)
 
         new_folder_action = QAction(QIcon("icons/new-folder.png"), "New Folder", self)
         new_folder_action.triggered.connect(self.newFolder)
-        self.toolbar.addAction(new_folder_action)
+        toolbar.addAction(new_folder_action)
 
         delete_action = QAction(QIcon("icons/delete.png"), "Delete File", self)
         delete_action.triggered.connect(self.deleteFile)
-        self.toolbar.addAction(delete_action)
+        toolbar.addAction(delete_action)
 
         # File Manager Panel
         self.file_manager = QtWidgets.QLabel(self.centralwidget)

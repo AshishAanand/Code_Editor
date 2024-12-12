@@ -1,8 +1,8 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-from syntax_highlighter import SyntaxHighlighter
+from syntax_highlighter import PythonHighlighter, JavaScriptHighlighter
 from pygments.lexers import get_lexer_by_name
 import os
-from PyQt5.QtWidgets import QFileDialog, QMessageBox, QPlainTextEdit
+from PyQt5.QtWidgets import QFileDialog, QMessageBox, QPlainTextEdit, QTextEdit
 from PyQt5.QtGui import QFont
 
 
@@ -19,9 +19,29 @@ class LineNumberArea(QtWidgets.QWidget):
 
 
 class CodeEditor(QtWidgets.QPlainTextEdit):
-    def __init__(self, parent=None):
+    def __init__(self, language="Python", parent=None):
         super().__init__(parent)
+        self.language = language
+        self.highlighter = None
+        self.setLanguage(language)
         self.line_number_area = LineNumberArea(self)
+        self.setFont(QFont("Fira Code", 12))
+        self.setStyleSheet("""
+            QPlainTextEdit {
+                background-color: #282c34;
+                color: #abb2bf;
+                border: 1px solid #3e4451;
+                border-radius: 6px;
+                padding: 8px;
+            }
+            QPlainTextEdit:focus {
+                border: 1px solid #61afef;
+            }
+        """)
+
+        # Adding line number area
+        self.line_number_area = LineNumberArea(self)
+        self.setViewportMargins(40, 0, 0, 0)  # Leave space for the line numbers
 
         # Signals from the document
         self.blockCountChanged.connect(self.updateLineNumberAreaWidth)
@@ -29,13 +49,23 @@ class CodeEditor(QtWidgets.QPlainTextEdit):
         self.cursorPositionChanged.connect(self.handleCursorChange)
         self.updateLineNumberAreaWidth(0)
 
-        self.highlighter = SyntaxHighlighter(self.document(), language="python")
+        
 
         self.setFont(QFont("Courier New", 12))
 
         self.setStyleSheet("background-color: #fff; color: #34495e;")  # Light theme for the editor
         self.setTabChangesFocus(True)
         self.file_path = None  # To keep track of the current file path
+    
+    def setLanguage(self, language):
+        """Switch syntax highlighting based on the selected language."""
+        self.language = language
+        if self.highlighter:
+            self.highlighter.setDocument(None)  # Disconnect the previous highlighter
+        if language == "Python":
+            self.highlighter = PythonHighlighter(self.document())
+        elif language == "JavaScript":
+            self.highlighter = JavaScriptHighlighter(self.document())
 
     def openFile(self, file_path):
         """Open a file and load its contents into the editor."""
@@ -120,7 +150,7 @@ class CodeEditor(QtWidgets.QPlainTextEdit):
 
     def lineNumberAreaWidth(self):
         digits = len(str(max(1, self.blockCount())))
-        space = 3 + self.fontMetrics().horizontalAdvance('15') * digits
+        space = 2 + self.fontMetrics().horizontalAdvance('5') * digits
         return space
 
     def updateLineNumberAreaWidth(self, _):
@@ -144,7 +174,7 @@ class CodeEditor(QtWidgets.QPlainTextEdit):
 
     def lineNumberAreaPaintEvent(self, event):
         painter = QtGui.QPainter(self.line_number_area)
-        painter.fillRect(event.rect(), QtCore.Qt.darkGray)
+        painter.fillRect(event.rect(), QtCore.Qt.gray)
 
         block = self.firstVisibleBlock()
         block_number = block.blockNumber()

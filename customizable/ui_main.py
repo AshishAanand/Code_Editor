@@ -1,267 +1,528 @@
-import sys
-from PyQt5.QtCore import Qt, QSize, QPoint
-from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QVBoxLayout, QWidget, QToolBar, QAction, QFileDialog,
-    QPlainTextEdit, QMessageBox, QStatusBar, QLabel
-)
-from PyQt5.QtGui import QIcon
-import os
-from code_editor import CodeEditor  # Assuming CodeEditor is in code_editor.py
-from PyQt5 import QtCore, QtGui, QtWidgets
+# import sys
+# from PyQt5.QtWidgets import (
+#     QApplication, QMainWindow, QTreeView, QSplitter, QVBoxLayout,
+#     QFileSystemModel, QTextEdit, QWidget, QMenuBar, QMenu, QAction, QFileDialog,
+#     QToolBar, QPushButton, QTabWidget, QToolButton,QComboBox
+# )
+# from PyQt5.QtCore import Qt
+# from PyQt5.QtGui import QFont, QIcon
+# from code_editor import CodeEditor
+# from shell import ModernShell
 
 
-# class DraggableLabel(QLabel):
-#     """A simple draggable QLabel."""
-#     def __init__(self, text, parent=None):
-#         super().__init__(text, parent)
-#         self.setStyleSheet("background-color: #3498db; color: white; padding: 5px; border-radius: 5px;")
-#         self.setAlignment(Qt.AlignCenter)
-#         self.setFixedSize(100, 30)  # Set the size of the label
-        
-#         # Set the font size correctly
-#         font = self.font()
-#         font.setPointSize(10)
-#         self.setFont(font)
+# class IDE(QMainWindow):
+#     def __init__(self):
+#         super().__init__()
 
-#     def mousePressEvent(self, event):
-#         if event.button() == Qt.LeftButton:
-#             self.drag_start_pos = event.pos()
+#         # Window properties
+#         self.setWindowTitle("Programers IDE by Ashish")
+#         self.setWindowIcon(QIcon("customizable/icons/Sharingan.png"))  # Add your custom icon here
+#         self.resize(1200, 800)
 
-#     def mouseMoveEvent(self, event):
-#         if event.buttons() == Qt.LeftButton:
-#             drag_distance = (event.pos() - self.drag_start_pos).manhattanLength()
-#             if drag_distance > QApplication.startDragDistance():
-#                 self.move(self.mapToParent(event.pos() - self.drag_start_pos))
+#         # Central widget setup
+#         self.central_widget = QWidget()
+#         self.setCentralWidget(self.central_widget)
 
+#         # Layout for the central widget
+#         self.layout = QVBoxLayout()
+#         self.central_widget.setLayout(self.layout)
 
+#         # Splitter to divide file tree and editor
+#         self.splitter = QSplitter(Qt.Horizontal)
+#         self.layout.addWidget(self.splitter)
 
-class Ui_MainWindow(QMainWindow):
-    def setupUi(self, MainWindow):
-        MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(900, 820)
-        MainWindow.setStyleSheet("background-color: rgb(40, 40, 40);")
+#         # Left Toolbar (Vertical)
+#         self.toolbar = QToolBar(self)
+#         self.toolbar.setOrientation(Qt.Vertical)
+#         self.toolbar.setStyleSheet("""
+#             QToolBar {
+#                 background-color: #21252b;
+#                 border: none;
+#                 padding: 5px;
+#                 border-radius: 6px;
+#             }
+#             QToolBar::item {
+#                 padding: 10px 15px;  /* Add padding for more height and width */
+#                 margin: 8px 0;      /* Add margin for spacing between items */
+#                 background-color: transparent; /* Ensure background remains clean */
+#             }
+#             QToolBar::item:hover {
+#                 background-color: #3e4451;
+#                 border-radius: 4px;
+#             }
+#         """)
+#         self.addToolBar(Qt.LeftToolBarArea, self.toolbar)
 
-        self.centralwidget = QtWidgets.QWidget(MainWindow)
-        self.centralwidget.setObjectName("centralwidget")
+#         open_action = QAction(QIcon("customizable/icons/folder.png"), "Explorer (Ctrl+Shift+K)", self)
+#         open_action.triggered.connect(self.open_file)
+#         self.toolbar.addAction(open_action)
 
-        # Set up toolbar with updated icons and professional look
-        toolbar = QToolBar()
-        self.addToolBar(toolbar)
-        toolbar.setIconSize(QSize(24, 24))  # Increase icon size for visibility
-        toolbar.setStyleSheet("background-color: #2c3e50; color: white;")  # Dark toolbar
+#         # self.toolbar.addSeparator()
 
-        # Add actions to toolbar
-        open_action = QAction(QIcon("icons/open.png"), "Open File", self)
-        open_action.triggered.connect(self.openFile)
-        toolbar.addAction(open_action)
+#         git_action = QAction(QIcon("customizable/icons/git.png"), "Git", self)
+#         # git_action.triggered.connect(self.git_file)
+#         self.toolbar.addAction(git_action)
 
-        save_action = QAction(QIcon("icons/save.png"), "Save File", self)
-        save_action.triggered.connect(self.saveFile)
-        toolbar.addAction(save_action)
+#         # self.toolbar.addSeparator()
 
-        new_file_action = QAction(QIcon("icons/new-file.png"), "New File", self)
-        new_file_action.triggered.connect(self.newFile)
-        toolbar.addAction(new_file_action)
+#         bug_action = QAction(QIcon("customizable/icons/bug.png"), "Debug", self)
+#         # bug_action.triggered.connect(self.bug_file)
+#         self.toolbar.addAction(bug_action)
 
-        new_folder_action = QAction(QIcon("icons/new-folder.png"), "New Folder", self)
-        new_folder_action.triggered.connect(self.newFolder)
-        toolbar.addAction(new_folder_action)
+#         # self.toolbar.addSeparator()
 
-        delete_action = QAction(QIcon("icons/delete.png"), "Delete File", self)
-        delete_action.triggered.connect(self.deleteFile)
-        toolbar.addAction(delete_action)
+#         extension_action = QAction(QIcon("customizable/icons/extension.png"), "Etensions", self)
+#         # git_action.triggered.connect(self.extension_file)
+#         self.toolbar.addAction(extension_action)
 
-        # File Manager Panel
-        self.file_manager = QtWidgets.QLabel(self.centralwidget)
-        self.file_manager.setGeometry(QtCore.QRect(60, 0, 200, 871))
-        self.file_manager.setStyleSheet("background-color: rgb(50, 50, 50);")
-        self.file_manager.setObjectName("file_manager")
-
-        # Side bar
-
-
-        # File Names Label
-        self.file_names = QtWidgets.QLabel(self.centralwidget)
-        self.file_names.setGeometry(QtCore.QRect(60, 20, 200, 40))
-        font = QtGui.QFont()
-        font.setPointSize(12)
-        font.setBold(True)
-        font.setWeight(75)
-        self.file_names.setFont(font)
-        self.file_names.setStyleSheet(
-            "background-color: rgb(30, 30, 30); color: white; padding: 5px; border-radius: 5px;"
-        )
-        self.file_names.setAlignment(QtCore.Qt.AlignCenter)
-        self.file_names.setObjectName("file_names")
-
-        # Workspace
-        self.workspace_width = 1090
-        self.workspace_height = 665
-        self.workspace = CodeEditor(self.centralwidget)
-        self.workspace.setGeometry(QtCore.QRect(260, 0, self.workspace_width, self.workspace_height))
-        self.workspace.setStyleSheet(
-            "background-color: rgb(20, 20, 20); padding: 20px; color: white; font-size: 16px; font-family: Consolas;"
-        )
-        self.workspace.setObjectName("workspace")
-
-        # Status Bar
-        MainWindow.setCentralWidget(self.centralwidget)
-        self.statusbar = QtWidgets.QStatusBar(MainWindow)
-        self.statusbar.setObjectName("statusbar")
-        self.statusbar.setStyleSheet("background-color: rgb(60, 60, 60); color: white;")
-        MainWindow.setStatusBar(self.statusbar)
-
-        # Menu Bar
-        self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 900, 25))
-        font = QtGui.QFont()
-        font.setPointSize(12)
-        self.menubar.setFont(font)
-        self.menubar.setStyleSheet("background-color: rgb(70, 70, 70); color: white;")
-        self.menubar.setObjectName("menubar")
-
-        # Creating File Tab
-        # self.menuFile = QtWidgets.QMenu(self.menubar)
-        self.menuFile = self.menubar.addMenu("File")
-        self.menuFile.setStyleSheet("color: white;")
-        self.menuFile.setObjectName("menuFile")
-
-        # Adding actions to File tab
-        self.new_file = self.menuFile.addAction("New")
-        # self.new_file.triggered.connect(self.new_file_action)
-        self.new_file.setShortcut("Ctrl+N")
-
-        self.open_file = self.menuFile.addAction("Open")
-        self.open_file.setShortcut("Ctrl+O")
-        # self.open_file.trigger.connect(self.open_file_action)
-
-        self.open_folder = self.menuFile.addAction("Open Folder")
-        self.open_folder.setShortcut("Ctrl+Shift+O")
-        
-
-        self.save_file = self.menuFile.addAction("Save")
-        self.save_file.setShortcut("Ctrl+S")
-
-        # Creating Edit Tab
-        # self.menuEdit = QtWidgets.QMenu(self.menubar)
-        self.menuEdit = self.menubar.addMenu("Edit")
-        self.menuEdit.setStyleSheet("color: white;")
-        self.menuEdit.setObjectName("menuEdit")
-
-        # Adding actions to Edit tab
-        self.undo = self.menuEdit.addAction("Undo")
-        # self.undo.triggered.connect(self.undo_action)
-        self.undo.setShortcut("Ctrl+Z")
-
-        self.redo = self.menuEdit.addAction("Redo")
-        # self.redo.triggered.connect(self.redo_action)
-        self.redo.setShortcut("Ctrl+Y")
-
-        self.cut = self.menuEdit.addAction("Cut")
-        # self.cut.triggered.connect(self.cut_action)
-        self.cut.setShortcut("Ctrl+X")
-
-        self.copy = self.menuEdit.addAction("Copy")
-        # self.copy.triggered.connect(self.copy_action)
-        self.copy.setShortcut("Ctrl+C")
-
-        self.past = self.menuEdit.addAction("Past")
-        # self.past.triggered.connect(self.past_action)
-        self.past.setShortcut("Ctrl+V")
-
-        self.run_code = self.menubar.addMenu("Run")
-        self.run_code.setStyleSheet("color: white;")
-        self.run_code.setObjectName("run_code")
-
-        # Adding actions to Run tab
-        self.run_this_file = self.run_code.addAction("Run Code")
-        self.run_this_file.triggered.connect(self.run_this_file_action)
-        self.run_this_file.setShortcut("Ctrl+R")
+#         # Adjust tool button size manually
+#         for action in self.toolbar.actions():
+#             button = self.toolbar.widgetForAction(action)
+#             if isinstance(button, QToolButton):
+#                 button.setFixedSize(60, 60)  # Set width=100px and height=60px
 
 
+#         # File tree view
+#         self.file_tree = QTreeView()
+#         self.file_model = QFileSystemModel()
+#         self.file_model.setRootPath("Code_Editor")  # Set to root or a specific directory
+#         self.file_tree.setModel(self.file_model)
+#         self.file_tree.setRootIndex(self.file_model.index("E:\Learnings_and_Projects\GitHub-repo\Code_Editor"))  # Set to root or a specific directory
+#         self.file_tree.setHeaderHidden(True)
+#         self.file_tree.setColumnHidden(1, True)
+#         self.file_tree.setColumnHidden(2, True)
+#         self.file_tree.setColumnHidden(3, True)
+#         self.file_tree.setStyleSheet("""
+#             QTreeView {
+#                 background-color: #21252b;
+#                 color: #dcdcdc;
+#                 border: none;
+#                 padding: 5px;
+#                 border-radius: 6px;
+#             }
+#             QTreeView::item:hover {
+#                 background-color: #3e4451;
+#                 border-radius: 4px;
+#             }
+#             QTreeView::item {
+#                 height: 35px;
+#             }
+#             QTreeView::item:selected {
+#                 background-color: #61afef;
+#                 color: #ffffff;
+#                 border-radius: 4px;
+#             }
+#         """)
+#         self.file_tree.clicked.connect(self.open_file_from_tree)
+#         self.splitter.addWidget(self.file_tree)
 
-        MainWindow.setMenuBar(self.menubar)
-        self.menubar.addAction(self.menuFile.menuAction())
-        self.menubar.addAction(self.menuEdit.menuAction())
-        self.menubar.addAction(self.run_code.menuAction())
 
-        # Retranslate UI
-        self.retranslateUi(MainWindow)
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+#         # Tab widget for editor
+#         self.tab_widget = QTabWidget()
+#         self.tab_widget.setTabsClosable(True)
+#         self.tab_widget.setStyleSheet("""
+#             QTabWidget::pane {
+#                 border: 1px solid #3e4451;
+#                 border-radius: 6px;
+#             }
+#             QTabBar::tab {
+#                 background: #21252b;
+#                 color: #abb2bf;
+#                 padding: 6px;
+#                 border: 1px solid #3e4451;
+#                 border-radius: 4px;
+#                 margin: 2px;
+#             }
+#             QTabBar::tab:selected {
+#                 background: #61afef;
+#                 color: #ffffff;
+#             }
+#         """)
+#         self.tab_widget.tabCloseRequested.connect(self.close_tab)
+#         self.splitter.addWidget(self.tab_widget)
+#         self.splitter.setSizes([300, 900])
+#         # Tab styling update
+#         self.tab_widget.setStyleSheet("""
+#             QTabWidget::pane {
+#                 border: 1px solid #3e4451;
+#                 border-radius: 6px;
+#             }
+#             QTabBar::tab {
+#                 min-width: 55px;
+#                 background: #21252b;
+#                 color: #abb2bf;
+#                 padding: 8px 5px;
+#                 border: 1px solid #3e4451;
+#                 border-radius: 4px;
+#                 margin: 6px;
+#             }
+#             QTabBar::tab:selected {
+#                 background: #61afef;
+#                 color: #ffffff;
+#                 font-weight: bold;
+#             }
+#             QTabBar::tab:hover {
+#                 background: #3e4451;
+#                 color: #ffffff;
+#             }
+#             QTabBar::close-button {
+#                 image: url('customizable/icons/closs.png'); /* Replace with your close icon path */
+#             }
+#         """)
+
+#         # Code editor
+#         self.editor = CodeEditor()
+#         self.splitter.addWidget(self.editor)
+#         self.splitter.setSizes([300, 900])
+#         self.editor.setStyleSheet("""
+#             QTextEdit {
+#                 background-color: #282c34;
+#                 color: #abb2bf;
+#                 border: 1px solid #3e4451;
+#                 border-radius: 6px;
+#                 padding: 8px;
+#            }
+#             QTextEdit:focus {
+#                 border: 1px solid #61afef;
+#             }
+#             QPlainTextEdit {
+#                 background-color: #282c34;
+#                 color: #abb2bf;
+#                 border: 1px solid #3e4451;
+#                 border-radius: 6px;
+#                 padding: 8px;                      
+#             }
+#             QPlainTextEdit:hover {
+#                 border: 1px solid #61afef;                      
+#             }
+#         """)
+#         # Shell
+#         self.shell = ModernShell()
+#         self.splitter.addWidget(self.shell)
+#         self.splitter.setSizes([300, 900])
+
+#         # Language selector
+#         self.language_selector = QComboBox()
+#         self.language_selector.addItems(["Python", "JavaScript"])
+#         self.language_selector.currentTextChanged.connect(self.changeLanguage)
+#         self.layout.addWidget(self.language_selector)
+
+#         # Menu bar setup
+#         self.menu_bar = QMenuBar()
+#         self.setMenuBar(self.menu_bar)
+#         self.menu_bar.setStyleSheet("""
+#             QMenuBar {
+#                 background-color: #21252b;
+#                 color: #abb2bf;
+#                 border: none;
+#             }
+#             QMenuBar::item:hover {
+#                 background-color: #3e4451;
+#                 border-radius: 4px;
+#             }
+#             QMenuBar::item:selected {
+#                 background-color: #61afef;
+#                 color: #ffffff;
+#                 border-radius: 4px;
+#             }
+#         """)
+
+#         file_menu = QMenu("File", self)
+#         self.menu_bar.addMenu(file_menu)
+
+#         new_action_menu = QAction(QIcon("icons/new_file.png"), "New", self)  # Add icons if available
+#         new_action_menu.triggered.connect(self.open_file)
+#         file_menu.addAction(new_action_menu)
+
+#         open_action_menu = QAction(QIcon("icons/open.png"), "Open", self)
+#         open_action_menu.triggered.connect(self.open_file)
+#         file_menu.addAction(open_action_menu)
+
+#         save_action_menu = QAction(QIcon("icons/save.png"), "Save", self)
+#         save_action_menu.triggered.connect(self.save_file)
+#         file_menu.addAction(save_action_menu)
+
+#         file_menu.addSeparator()
+
+#         exit_action = QAction(QIcon("exit_icon.png"), "Exit", self)
+#         exit_action.triggered.connect(self.close)
+#         file_menu.addAction(exit_action)
+
+#         # Initialize the current file dictionary
+#         self.open_files = {}
     
-    # def set_up_body(self):
+#     def changeLanguage(self, language):
+#         self.editor.setLanguage(language)
 
-    #     # Body
+#     def open_file(self):
+#         file_path, _ = QFileDialog.getOpenFileName(self, "Open File")
+#         if file_path:
+#             self.load_file(file_path)
 
-    #     body_frame = QFarme()
-    #     body_frame.setFrameShape(QFrame.NoFrame)
-    #     body_frame = setFrameShadow(QFrame.Plain)
-    #     body_frame.setLineWidth(0)
-    #     body_frame.setMidLineWidth(0)
-    #     body_frame.setContentMargins(0,0,0,0)
+#     def save_file(self):
+#         current_widget = self.tab_widget.currentWidget()
+#         if current_widget:
+#             editor, file_path = self.open_files.get(self.tab_widget.indexOf(current_widget))
+#             if file_path:
+#                 with open(file_path, "w") as file:
+#                     file.write(editor.toPlainText())
+#             else:
+#                 file_path, _ = QFileDialog.getSaveFileName(self, "Save File")
+#                 if file_path:
+#                     with open(file_path, "w") as file:
+#                         file.write(editor.toPlainText())
+
+#     def load_file(self, file_path):
+#         if file_path not in [path for _, path in self.open_files.values()]:
+#             try:
+#                 with open(file_path, "r") as file:
+#                     content = file.read()
+
+#                 editor = CodeEditor()
+#                 editor.setPlainText(content)
+
+#                 # Ensure consistent styling for the editor
+#                 editor.setStyleSheet("""
+#                     QTextEdit, QPlainTextEdit {
+#                         background-color: #282c34;
+#                         color: #abb2bf;
+#                         border: 1px solid #3e4451;
+#                         border-radius: 6px;
+#                         padding: 8px;
+#                     }
+#                     QTextEdit:focus, QPlainTextEdit:hover {
+#                         border: 1px solid #61afef;
+#                     }
+#                 """)
+
+#                 file_name = file_path.split("/")[-1]
+#                 self.tab_widget.addTab(editor, file_name)
+
+#                 # Keep track of open files
+#                 self.open_files[self.tab_widget.indexOf(editor)] = (editor, file_path)
+#             except Exception as e:
+#                 print(f"Error loading file: {e}")
+
+#     def open_file_from_tree(self, index):
+#         file_path = self.file_model.filePath(index)
+#         if not self.file_model.isDir(index):
+#             self.load_file(file_path)
+
+#     def close_tab(self, index):
+#         self.tab_widget.removeTab(index)
+#         self.open_files.pop(index, None)
+        
+# if __name__ == "__main__":
+#     app = QApplication(sys.argv)
+    
+#     # Apply the global style to the application
+#     app.setStyleSheet("""
+#         QWidget {
+#             background-color: #282c34;
+#         }
+#     """)
+    
+#     ide = IDE()
+#     ide.show()
+#     sys.exit(app.exec_())
 
 
-    def retranslateUi(self, MainWindow):
-        _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Code Editor"))
-        self.file_names.setText(_translate("MainWindow", "File Manager"))
-        self.menuFile.setTitle(_translate("MainWindow", "File"))
-        self.menuEdit.setTitle(_translate("MainWindow", "Edit"))
-        self.run_code.setTitle(_translate("MainWindow", "Run"))
+import sys
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QTextEdit, QFileDialog, QVBoxLayout, QTreeView, QFileSystemModel, QSplitter,
+                             QHBoxLayout, QWidget, QAction, QMenu, QPushButton, QToolBar, QLabel, QInputDialog, QMessageBox)
+from PyQt5.QtGui import QFont, QColor, QTextCursor
+from PyQt5.QtCore import Qt, QProcess
 
-    def run_this_file_action(self):
-        print("Run this file action")
+class IDE(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("IDE with Shell UI")
+        self.setGeometry(100, 100, 1200, 800)
+        
+        self.recent_files = []
+        self.init_ui()
+        self.init_menubar()
+        self.init_toolbar()
+        
+    def init_ui(self):
+        # Main layout
+        self.central_widget = QWidget()
+        self.setCentralWidget(self.central_widget)
+        layout = QVBoxLayout(self.central_widget)
 
+        # Splitter for file tree and editor/shell
+        self.splitter = QSplitter(Qt.Horizontal, self)
+        layout.addWidget(self.splitter)
 
-    def openFile(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, "Open File", "", "All Files (*)")
+        # File tree setup
+        self.file_model = QFileSystemModel()
+        self.file_model.setRootPath("")
+
+        self.file_tree = QTreeView()
+        self.file_tree.setModel(self.file_model)
+        self.file_tree.setRootIndex(self.file_model.index(""))
+        self.file_tree.doubleClicked.connect(self.open_file_from_tree)
+        self.splitter.addWidget(self.file_tree)
+
+        # Tab widget for editors
+        self.tabs = QTabWidget()
+        self.splitter.addWidget(self.tabs)
+
+        # Shell output widget
+        self.shell = QTextEdit()
+        self.shell.setReadOnly(True)
+        self.shell.setStyleSheet("background-color: black; color: white;")
+        self.splitter.addWidget(self.shell)
+
+        self.splitter.setSizes([200, 600, 400])
+
+    def init_menubar(self):
+        menubar = self.menuBar()
+
+        # File menu
+        file_menu = menubar.addMenu("File")
+
+        new_file_action = QAction("New File", self)
+        new_file_action.triggered.connect(self.new_file)
+        file_menu.addAction(new_file_action)
+
+        open_file_action = QAction("Open File", self)
+        open_file_action.triggered.connect(self.open_file)
+        file_menu.addAction(open_file_action)
+
+        save_file_action = QAction("Save File", self)
+        save_file_action.triggered.connect(self.save_file)
+        file_menu.addAction(save_file_action)
+
+        save_as_action = QAction("Save As", self)
+        save_as_action.triggered.connect(self.save_file_as)
+        file_menu.addAction(save_as_action)
+
+        close_tab_action = QAction("Close Tab", self)
+        close_tab_action.triggered.connect(self.close_tab)
+        file_menu.addAction(close_tab_action)
+
+        # Recent Files menu
+        self.recent_files_menu = QMenu("Recent Files", self)
+        file_menu.addMenu(self.recent_files_menu)
+
+        set_root_action = QAction("Set Root Directory", self)
+        set_root_action.triggered.connect(self.set_root_directory)
+        file_menu.addAction(set_root_action)
+
+        self.update_recent_files_menu()
+
+    def init_toolbar(self):
+        toolbar = QToolBar("Main Toolbar")
+        self.addToolBar(toolbar)
+
+        run_action = QAction("Run", self)
+        run_action.triggered.connect(self.run_code)
+        toolbar.addAction(run_action)
+
+        clear_shell_action = QAction("Clear Shell", self)
+        clear_shell_action.triggered.connect(self.clear_shell)
+        toolbar.addAction(clear_shell_action)
+
+        theme_action = QAction("Toggle Theme", self)
+        theme_action.triggered.connect(self.toggle_theme)
+        toolbar.addAction(theme_action)
+
+    def new_file(self):
+        editor = QTextEdit()
+        index = self.tabs.addTab(editor, "Untitled")
+        self.tabs.setCurrentIndex(index)
+
+    def open_file(self):
+        file_path, _ = QFileDialog.getOpenFileName(self, "Open File", "", "All Files (*.*)")
         if file_path:
-            self.editor.openFile(file_path)
-            self.statusBar.showMessage(f"Opened: {file_path}", 2000)
+            self.load_file(file_path)
 
-    def saveFile(self):
-        if self.editor.file_path:
-            self.editor.saveFile()
-            self.statusBar.showMessage(f"Saved: {self.editor.file_path}", 2000)
+    def save_file(self):
+        current_editor = self.tabs.currentWidget()
+        if not current_editor:
+            return
+        
+        if hasattr(current_editor, "file_path") and current_editor.file_path:
+            with open(current_editor.file_path, "w") as file:
+                file.write(current_editor.toPlainText())
+            self.tabs.setTabText(self.tabs.currentIndex(), current_editor.file_path.split("/")[-1])
         else:
-            self.saveFileAs()
+            self.save_file_as()
 
-    def saveFileAs(self):
-        file_path, _ = QFileDialog.getSaveFileName(self, "Save File As", "", "All Files (*)")
+    def save_file_as(self):
+        current_editor = self.tabs.currentWidget()
+        if not current_editor:
+            return
+        
+        file_path, _ = QFileDialog.getSaveFileName(self, "Save File As", "", "All Files (*.*)")
         if file_path:
-            self.editor.file_path = file_path
-            self.editor.saveFile()
-            self.statusBar.showMessage(f"Saved As: {file_path}", 2000)
+            with open(file_path, "w") as file:
+                file.write(current_editor.toPlainText())
+            current_editor.file_path = file_path
+            self.tabs.setTabText(self.tabs.currentIndex(), file_path.split("/")[-1])
 
-    def newFile(self):
-        new_file_name, _ = QFileDialog.getSaveFileName(self, "New File", "", "All Files (*)")
-        if new_file_name:
-            self.editor.newFile(new_file_name)
-            self.statusBar.showMessage(f"Created: {new_file_name}", 2000)
+    def close_tab(self):
+        current_index = self.tabs.currentIndex()
+        if current_index != -1:
+            self.tabs.removeTab(current_index)
 
-    def newFolder(self):
-        folder_name = QFileDialog.getExistingDirectory(self, "Select Folder")
-        if folder_name:
-            self.editor.newFolder(folder_name)
-            self.statusBar.showMessage(f"Folder Created: {folder_name}", 2000)
+    def load_file(self, file_path):
+        with open(file_path, "r") as file:
+            content = file.read()
+        editor = QTextEdit()
+        editor.setPlainText(content)
+        editor.file_path = file_path
+        index = self.tabs.addTab(editor, file_path.split("/")[-1])
+        self.tabs.setCurrentIndex(index)
 
-    def deleteFile(self):
-        if self.editor.file_path:
-            self.editor.deleteFile()
-            self.statusBar.showMessage(f"Deleted: {self.editor.file_path}", 2000)
+        if file_path not in self.recent_files:
+            self.recent_files.append(file_path)
+        self.update_recent_files_menu()
+
+    def update_recent_files_menu(self):
+        self.recent_files_menu.clear()
+        for file_path in self.recent_files[-5:]:
+            action = QAction(file_path, self)
+            action.triggered.connect(lambda checked, path=file_path: self.load_file(path))
+            self.recent_files_menu.addAction(action)
+
+    def set_root_directory(self):
+        dir_path = QFileDialog.getExistingDirectory(self, "Select Root Directory")
+        if dir_path:
+            self.file_model.setRootPath(dir_path)
+            self.file_tree.setRootIndex(self.file_model.index(dir_path))
+
+    def open_file_from_tree(self, index):
+        file_path = self.file_model.filePath(index)
+        if not self.file_model.isDir(index):
+            self.load_file(file_path)
+
+    def run_code(self):
+        current_editor = self.tabs.currentWidget()
+        if not current_editor:
+            return
+        
+        code = current_editor.toPlainText()
+        with open("temp_code.py", "w") as file:
+            file.write(code)
+
+        process = QProcess(self)
+        process.readyReadStandardOutput.connect(lambda: self.shell.append(process.readAllStandardOutput().data().decode()))
+        process.readyReadStandardError.connect(lambda: self.shell.append(process.readAllStandardError().data().decode()))
+        process.start("python", ["temp_code.py"])
+
+    def clear_shell(self):
+        self.shell.clear()
+
+    def toggle_theme(self):
+        if self.shell.styleSheet() == "background-color: black; color: white;":
+            self.shell.setStyleSheet("background-color: white; color: black;")
         else:
-            self.showMessage("Error", "No file to delete.")
-
-    def showMessage(self, title, message):
-        msg = QMessageBox()
-        msg.setIcon(QMessageBox.Information)
-        msg.setText(message)
-        msg.setWindowTitle(title)
-        msg.exec_()
-
+            self.shell.setStyleSheet("background-color: black; color: white;")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = Ui_MainWindow()
-    window.show()
+    ide = IDE()
+    ide.show()
     sys.exit(app.exec_())

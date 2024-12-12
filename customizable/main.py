@@ -1,14 +1,21 @@
 from PyQt5 import QtWidgets
-from ui_main import Ui_MainWindow
+from ui_main import IDE
 import sys
+from PyQt5.QtWidgets import QApplication
 
 
 def main():
-    app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
+    app = QApplication(sys.argv)
+    
+    # Apply the global style to the application
+    app.setStyleSheet("""
+        QWidget {
+            background-color: #282c34;
+        }
+    """)
+    
+    ide = IDE()
+    ide.show()
     sys.exit(app.exec_())
 
 

@@ -2,8 +2,9 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from syntax_highlighter import PythonHighlighter, JavaScriptHighlighter
 from pygments.lexers import get_lexer_by_name
 import os
-from PyQt5.QtWidgets import QFileDialog, QMessageBox, QPlainTextEdit, QTextEdit
+from PyQt5.QtWidgets import QFileDialog, QMessageBox, QPlainTextEdit, QTextEdit, QCompleter, QListView, QAbstractItemView
 from PyQt5.QtGui import QFont
+from PyQt5.QtCore import pyqtSignal, Qt, QStringListModel
 
 
 class LineNumberArea(QtWidgets.QWidget):
@@ -19,6 +20,10 @@ class LineNumberArea(QtWidgets.QWidget):
 
 
 class CodeEditor(QtWidgets.QPlainTextEdit):
+
+    text_changed = pyqtSignal(str)
+    selection_made = pyqtSignal(str)  # For selected autocomplete suggestion
+
     def __init__(self, language="Python", parent=None):
         super().__init__(parent)
         self.language = language
@@ -56,6 +61,53 @@ class CodeEditor(QtWidgets.QPlainTextEdit):
         self.setStyleSheet("background-color: #fff; color: #34495e;")  # Light theme for the editor
         self.setTabChangesFocus(True)
         self.file_path = None  # To keep track of the current file path
+
+
+        self.textChanged.connect(self.emit_text_change)
+
+        # Autocomplete Dropdown
+        
+        self.autocomplete = AutocompleteDropdown(self)
+        self.autocomplete.activated.connect(self.insert_autocomplete_suggestion)
+        self.autocomplete.popup().setStyleSheet("""
+                QListView {
+                    background-color: #282c34;
+                    color: #dcdcdc;
+                    border: 1px solid #3e4451;
+                    padding: 5px;
+                }
+                QListView::item {
+                    padding: 5px;
+                    border-radius: 4px;
+                }
+                QListView::item:hover {
+                    background-color: #3e4451;
+                    color: #ffffff;
+                }
+                QListView::item:selected {
+                    background-color: #61afef;
+                    color: #ffffff;
+                }
+            """)
+
+    
+    def emit_text_change(self):
+        """Emit the text_changed signal with the current editor content."""
+        text = self.toPlainText()
+        self.text_changed.emit(text)
+
+    def insert_autocomplete_suggestion(self, text):
+        """Insert the selected suggestion into the editor."""
+        cursor = self.textCursor()
+        cursor.select(cursor.WordUnderCursor)
+        cursor.insertText(text)
+        self.setTextCursor(cursor)
+
+    def keyPressEvent(self, event):
+        """Show autocomplete dropdown on key events."""
+        super().keyPressEvent(event)
+        if event.key() in (Qt.Key_Space, Qt.Key_Tab):
+            self.autocomplete.complete()
     
     def setLanguage(self, language):
         """Switch syntax highlighting based on the selected language."""
@@ -66,6 +118,9 @@ class CodeEditor(QtWidgets.QPlainTextEdit):
             self.highlighter = PythonHighlighter(self.document())
         elif language == "JavaScript":
             self.highlighter = JavaScriptHighlighter(self.document())
+        else:
+            print(f"Warning: Language '{language}' not recognized. No syntax highlighting applied.")
+            self.highlighter.setDocument(self.document())  # Connect the new highlighter
 
     def openFile(self, file_path):
         """Open a file and load its contents into the editor."""
@@ -74,6 +129,8 @@ class CodeEditor(QtWidgets.QPlainTextEdit):
                 content = file.read()
                 self.setPlainText(content)
                 self.file_path = file_path
+        except FileNotFoundError:
+            self.showError("File Not Found", f"The file '{file_path}' does not exist.")
         except Exception as e:
             self.showError("Error opening file", str(e))
 
@@ -198,3 +255,18 @@ class CodeEditor(QtWidgets.QPlainTextEdit):
 
     def handleCursorChange(self):
         self.line_number_area.update()
+
+
+class AutocompleteDropdown(QCompleter):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setCompletionMode(QCompleter.PopupCompletion)
+        self.setFilterMode(Qt.MatchContains)
+        self.setModel(QStringListModel())
+        self.popup().setViewMode(QListView.ListMode)
+        self.popup().setSelectionBehavior(QAbstractItemView.SelectRows)
+
+    def update_suggestions(self, suggestions):
+        """Update autocomplete suggestions dynamically."""
+        self.model().setStringList(suggestions)
+        self.complete()
